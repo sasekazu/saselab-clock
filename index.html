@@ -8,74 +8,84 @@
 <style>
   :root {
     --bg: #000;
-    --fg: #f2f2f2;
-    --dim: #8a8a8a;
-    --faint: #3a3a3a;
-    --accent: #ff5a4d;
+    --fg: #f5f5f5;
+    --dim: #b5b5b5;
+    --faint: #4a4a4a;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
   body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: min(3vh, 24px);
-    padding: 16px;
     font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
     overflow: hidden;
   }
-
-  /* --- main clock (JST) --- */
-  .main { display: flex; flex-direction: column; align-items: center; gap: min(2.5vh, 20px); }
-  #main-clock { width: min(78vw, 52vh, 460px); height: auto; aspect-ratio: 1; }
-  .date { font-size: clamp(14px, 2.6vh, 22px); letter-spacing: .08em; color: var(--dim); }
-  .time {
-    font-size: clamp(36px, 8vh, 72px);
-    font-weight: 300;
-    letter-spacing: .04em;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-  .label { font-size: 12px; letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
-
-  /* --- sub clock (Austria) --- */
-  .sub {
-    display: flex;
+  .stage {
+    height: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
     align-items: center;
-    gap: 16px;
-    padding: 10px 18px;
-    border: 1px solid var(--faint);
-    border-radius: 14px;
-    opacity: .85;
+    gap: 4vw;
+    padding: 4vh 4vw;
   }
-  #sub-clock { width: 72px; height: 72px; flex: none; }
-  .sub-text { display: flex; flex-direction: column; gap: 4px; }
-  .sub .time { font-size: 24px; font-weight: 300; }
-  .sub .date { font-size: 12px; }
+  #main-clock { height: min(88vh, 46vw); width: auto; aspect-ratio: 1; }
+  .info {
+    display: flex; flex-direction: column; justify-content: center;
+    height: 100%; gap: 3vh; min-width: 0;
+  }
+  .label { font-size: min(2.4vh, 1.4vw); letter-spacing: .22em; color: var(--dim); text-transform: uppercase; }
+  .date { font-size: min(6.2vh, 3.4vw); font-weight: 500; letter-spacing: .04em; white-space: nowrap; }
+  .time {
+    font-size: min(17vh, 9.4vw); font-weight: 300; letter-spacing: .02em;
+    font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap;
+  }
+  .main-info { display: flex; flex-direction: column; gap: 2vh; }
 
-  @media (max-height: 560px) and (orientation: landscape) {
-    body { flex-direction: row; gap: 5vw; }
-    #main-clock { width: min(60vh, 40vw); }
+  .sub {
+    display: flex; align-items: center; gap: 2.4vw;
+    padding: 2vh 2vw; margin-top: 3vh;
+    border: 1px solid var(--faint); border-radius: 2vh;
+    align-self: flex-start;
+  }
+  #sub-clock { height: 14vh; width: 14vh; flex: none; }
+  .sub-text { display: flex; flex-direction: column; gap: 1vh; }
+  .sub .label { font-size: min(2vh, 1.2vw); }
+  .sub .time { font-size: min(7vh, 4vw); font-weight: 300; }
+  .sub .date { font-size: min(3vh, 1.8vw); font-weight: 400; color: var(--dim); }
+
+  /* portrait / narrow screens: stack */
+  @media (max-aspect-ratio: 1/1), (max-width: 700px) {
+    .stage { grid-template-columns: 1fr; justify-items: center; align-content: center; gap: 2vh; padding: 3vh 5vw; }
+    #main-clock { height: auto; width: min(80vw, 44vh); }
+    .info { height: auto; align-items: center; text-align: center; gap: 2vh; }
+    .date { font-size: min(5vw, 3.4vh); }
+    .time { font-size: min(14vw, 8vh); }
+    .label { font-size: 12px; }
+    .sub { align-self: center; margin-top: 1vh; gap: 16px; padding: 10px 18px; text-align: left; }
+    #sub-clock { height: 72px; width: 72px; }
+    .sub .time { font-size: 26px; }
+    .sub .date { font-size: 14px; }
+    .sub .label { font-size: 11px; }
   }
 </style>
 </head>
 <body>
-  <main class="main">
-    <div class="label">Japan · JST</div>
+  <div class="stage">
     <svg id="main-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（日本時間）"></svg>
-    <div class="date" id="main-date">--</div>
-    <div class="time" id="main-time">--:--:--</div>
-  </main>
-
-  <aside class="sub">
-    <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
-    <div class="sub-text">
-      <div class="label">Austria · Vienna</div>
-      <div class="time" id="sub-time">--:--:--</div>
-      <div class="date" id="sub-date">--</div>
-    </div>
-  </aside>
+    <section class="info">
+      <div class="main-info">
+        <div class="label">Japan · JST</div>
+        <div class="date" id="main-date">--</div>
+        <div class="time" id="main-time">--:--:--</div>
+      </div>
+      <aside class="sub">
+        <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
+        <div class="sub-text">
+          <div class="label">Austria · Vienna</div>
+          <div class="time" id="sub-time">--:--:--</div>
+          <div class="date" id="sub-date">--</div>
+        </div>
+      </aside>
+    </section>
+  </div>
 
 <script>
 (() => {

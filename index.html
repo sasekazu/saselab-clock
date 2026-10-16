@@ -61,6 +61,21 @@
   .tl-labels span { position: absolute; transform: translateX(-50%); }
   .tl-labels span.cur { color: var(--fg); font-weight: 600; }
   .sch-next { font-size: min(2.4vh, 1.4vw); color: var(--dim); white-space: nowrap; }
+  /* Austria show/hide toggle */
+  .sub { position: relative; }
+  .tg {
+    font: inherit; color: var(--dim); background: none; border: 0; cursor: pointer;
+    opacity: .3; transition: opacity .2s; padding: 0; line-height: 1;
+  }
+  .tg:hover, .tg:focus-visible { opacity: 1; outline: none; }
+  .tg:focus-visible { box-shadow: 0 0 0 2px var(--dim); border-radius: 6px; }
+  #sub-toggle {
+    position: fixed; right: 1.2vw; bottom: 1.2vh;
+    font-size: min(1.9vh, 1.1vw); letter-spacing: .18em; text-transform: uppercase; color: #6a6a6a;
+    padding: .6em .9em;
+  }
+  .no-sub .sub { display: none; }
+  .no-sub.no-school .info { justify-content: center; }
   .no-school .school { display: none; }
   .no-school .time { font-size: min(24vh, 13vw); }
   .date .u { font-size: .7em; margin: 0 .08em; }
@@ -111,7 +126,7 @@
         <div class="time" id="main-time">--:--</div>
       </div>
       <section class="school" id="school" aria-live="off"></section>
-      <aside class="sub">
+      <aside class="sub" id="sub">
         <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
         <div class="sub-text">
           <div class="sub-head">
@@ -124,6 +139,7 @@
       </aside>
     </section>
   </div>
+  <button class="tg" id="sub-toggle" type="button" title="オーストリア時間の表示切替 (A)"></button>
 
 <script>
 (() => {
@@ -336,6 +352,29 @@
     return (holidayCache[year] = set);
   }
   const isSchoolDay = (t) => t.wd !== 0 && t.wd !== 6 && !holidaysOf(t.y).has(t.mo * 100 + t.d);
+
+  // --- Austria show/hide (button, "A" key, or ?austria=off|on; remembered in this browser) ---
+  const SUB_KEY = "saselab-clock.austria";
+  const store = {
+    get() { try { return localStorage.getItem(SUB_KEY); } catch (e) { return null; } },
+    set(v) { try { localStorage.setItem(SUB_KEY, v); } catch (e) {} },
+  };
+  const qs = new URLSearchParams(location.search).get("austria");
+  if (qs === "off" || qs === "0") store.set("off");
+  if (qs === "on" || qs === "1") store.set("on");
+  const subBtn = document.getElementById("sub-toggle");
+  const applySub = (visible) => {
+    document.body.classList.toggle("no-sub", !visible);
+    subBtn.textContent = visible ? "Austria −" : "Austria +";
+    subBtn.setAttribute("aria-label", visible ? "オーストリア時間を隠す" : "オーストリア時間を表示");
+  };
+  let subVisible = store.get() !== "off";
+  applySub(subVisible);
+  const toggleSub = () => { subVisible = !subVisible; store.set(subVisible ? "on" : "off"); applySub(subVisible); };
+  subBtn.addEventListener("click", toggleSub);
+  addEventListener("keydown", (e) => {
+    if ((e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey && !e.altKey) toggleSub();
+  });
 
   const cache = {};
   const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).innerHTML = v; } };

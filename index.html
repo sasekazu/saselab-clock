@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>Saselab Clock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Murecho:wght@300;400;500;600&display=swap">
 <style>
   :root {
     --bg: #000;
@@ -15,7 +18,7 @@
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
   body {
-    font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    font-family: "Murecho", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
     overflow: hidden;
   }
   .stage {
@@ -127,7 +130,7 @@
           x: Math.sin(a) * 67, y: -Math.cos(a) * 67,
           fill: "#f2f2f2", "font-size": 18, "font-weight": 600,
           "text-anchor": "middle", "dominant-baseline": "central",
-          "font-family": "Helvetica Neue, Arial, sans-serif",
+          "font-family": "Murecho, Hiragino Sans, Noto Sans JP, sans-serif",
         });
         t.textContent = h;
         svg.appendChild(t);

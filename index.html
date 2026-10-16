@@ -38,6 +38,8 @@
     font-size: min(24vh, 13vw); font-weight: 300; letter-spacing: .02em;
     font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap;
   }
+  .date .u { font-size: .7em; margin: 0 .08em; }
+  .date .wd { margin-left: .4em; }
   .main-info { display: flex; flex-direction: column; gap: 2vh; }
 
   .sub {
@@ -179,11 +181,12 @@
   }
 
   const el = (id) => document.getElementById(id);
-  const dateText = (t) => `${t.y}年${t.mo}月${t.d}日（${WEEKDAYS[t.wd]}）`;
+  const dateText = (t) =>
+    `${t.y}<span class="u">年</span>${t.mo}<span class="u">月</span>${t.d}<span class="u">日</span><span class="wd">${WEEKDAYS[t.wd]}</span>`;
   const timeText = (t) => `${pad(t.h)}:${pad(t.mi)}`;
 
   const cache = {};
-  const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).textContent = v; } };
+  const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).innerHTML = v; } };
 
   function tick() {
     const now = new Date();

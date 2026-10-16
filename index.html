@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Saselab Clock</title>
+<style>
+  :root {
+    --bg: #000;
+    --fg: #f2f2f2;
+    --dim: #8a8a8a;
+    --faint: #3a3a3a;
+    --accent: #ff5a4d;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: min(3vh, 24px);
+    padding: 16px;
+    font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    overflow: hidden;
+  }
+
+  /* --- main clock (JST) --- */
+  .main { display: flex; flex-direction: column; align-items: center; gap: min(2.5vh, 20px); }
+  #main-clock { width: min(78vw, 52vh, 460px); height: auto; aspect-ratio: 1; }
+  .date { font-size: clamp(14px, 2.6vh, 22px); letter-spacing: .08em; color: var(--dim); }
+  .time {
+    font-size: clamp(36px, 8vh, 72px);
+    font-weight: 300;
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .label { font-size: 12px; letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
+
+  /* --- sub clock (Austria) --- */
+  .sub {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 18px;
+    border: 1px solid var(--faint);
+    border-radius: 14px;
+    opacity: .85;
+  }
+  #sub-clock { width: 72px; height: 72px; flex: none; }
+  .sub-text { display: flex; flex-direction: column; gap: 4px; }
+  .sub .time { font-size: 24px; font-weight: 300; }
+  .sub .date { font-size: 12px; }
+
+  @media (max-height: 560px) and (orientation: landscape) {
+    body { flex-direction: row; gap: 5vw; }
+    #main-clock { width: min(60vh, 40vw); }
+  }
+</style>
+</head>
+<body>
+  <main class="main">
+    <div class="label">Japan · JST</div>
+    <svg id="main-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（日本時間）"></svg>
+    <div class="date" id="main-date">--</div>
+    <div class="time" id="main-time">--:--:--</div>
+  </main>
+
+  <aside class="sub">
+    <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
+    <div class="sub-text">
+      <div class="label">Austria · Vienna</div>
+      <div class="time" id="sub-time">--:--:--</div>
+      <div class="date" id="sub-date">--</div>
+    </div>
+  </aside>
+
+<script>
+(() => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+  const make = (name, attrs = {}) => {
+    const el = document.createElementNS(SVGNS, name);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  };
+
+  // Build an analog clock face inside the given <svg>; returns hand elements.
+  function buildFace(svg, { detailed }) {
+    svg.appendChild(make("circle", { r: 96, fill: "none", stroke: detailed ? "#444" : "#333", "stroke-width": detailed ? 1.5 : 3 }));
+
+    for (let i = 0; i < 60; i++) {
+      const major = i % 5 === 0;
+      if (!detailed && !major) continue;
+      const len = major ? (detailed ? 7 : 14) : 4;
+      const a = (i * 6 * Math.PI) / 180;
+      const r1 = 90, r2 = r1 - len;
+      svg.appendChild(make("line", {
+        x1: Math.sin(a) * r1, y1: -Math.cos(a) * r1,
+        x2: Math.sin(a) * r2, y2: -Math.cos(a) * r2,
+        stroke: major ? "#f2f2f2" : "#666",
+        "stroke-width": major ? (detailed ? 2.5 : 5) : 1,
+        "stroke-linecap": "round",
+      }));
+    }
+
+    if (detailed) {
+      for (let h = 1; h <= 12; h++) {
+        const a = (h * 30 * Math.PI) / 180;
+        const t = make("text", {
+          x: Math.sin(a) * 72, y: -Math.cos(a) * 72,
+          fill: "#f2f2f2", "font-size": 14, "font-weight": 300,
+          "text-anchor": "middle", "dominant-baseline": "central",
+          "font-family": "Helvetica Neue, Arial, sans-serif",
+        });
+        t.textContent = h;
+        svg.appendChild(t);
+      }
+    }
+
+    const hand = (w, len, color, tail = 0) => {
+      const g = make("line", { x1: 0, y1: tail, x2: 0, y2: -len, stroke: color, "stroke-width": w, "stroke-linecap": "round" });
+      svg.appendChild(g);
+      return g;
+    };
+    const hour = hand(detailed ? 5 : 6, detailed ? 40 : 48, "#f2f2f2");
+    const minute = hand(detailed ? 3.5 : 4, detailed ? 60 : 70, "#f2f2f2");
+    const second = detailed ? hand(1.5, 74, "#ff5a4d", 16) : null;
+    svg.appendChild(make("circle", { r: detailed ? 4 : 5, fill: detailed ? "#ff5a4d" : "#f2f2f2" }));
+    return { hour, minute, second };
+  }
+
+  const main = buildFace(document.getElementById("main-clock"), { detailed: true });
+  const sub = buildFace(document.getElementById("sub-clock"), { detailed: false });
+
+  const fmt = (tz) => new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz, hourCycle: "h23",
+    year: "numeric", month: "numeric", day: "numeric", weekday: "short",
+    hour: "numeric", minute: "numeric", second: "numeric",
+  });
+  const jst = fmt("Asia/Tokyo");
+  const vie = fmt("Europe/Vienna");
+
+  const WD_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const pad = (n) => String(n).padStart(2, "0");
+
+  function parts(formatter, date) {
+    const o = {};
+    for (const p of formatter.formatToParts(date)) o[p.type] = p.value;
+    return {
+      y: +o.year, mo: +o.month, d: +o.day, wd: WD_INDEX[o.weekday],
+      h: +o.hour, mi: +o.minute, s: +o.second,
+    };
+  }
+
+  const rot = (el, deg) => el && el.setAttribute("transform", `rotate(${deg})`);
+
+  function setHands(hands, t, ms) {
+    const sec = t.s + ms / 1000;
+    const min = t.mi + sec / 60;
+    const hr = (t.h % 12) + min / 60;
+    rot(hands.hour, hr * 30);
+    rot(hands.minute, min * 6);
+    rot(hands.second, sec * 6);
+  }
+
+  const el = (id) => document.getElementById(id);
+  const dateText = (t) => `${t.y}年${t.mo}月${t.d}日（${WEEKDAYS[t.wd]}）`;
+  const timeText = (t) => `${pad(t.h)}:${pad(t.mi)}:${pad(t.s)}`;
+
+  const cache = {};
+  const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).textContent = v; } };
+
+  function tick() {
+    const now = new Date();
+    const ms = now.getMilliseconds();
+    const j = parts(jst, now);
+    const v = parts(vie, now);
+
+    setHands(main, j, ms);
+    setHands(sub, v, 0);
+
+    setText("main-date", dateText(j));
+    setText("main-time", timeText(j));
+    setText("sub-date", dateText(v));
+    setText("sub-time", timeText(v));
+
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>

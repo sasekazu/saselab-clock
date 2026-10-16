@@ -26,10 +26,11 @@
     gap: 4vw;
     padding: 4vh 4vw;
   }
-  #main-clock { height: min(88vh, 46vw); width: auto; aspect-ratio: 1; }
+  :root { --clock: min(88vh, 46vw); }
+  #main-clock { height: var(--clock); width: auto; aspect-ratio: 1; }
   .info {
-    display: flex; flex-direction: column; justify-content: center;
-    height: 100%; gap: 3vh; min-width: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    height: var(--clock); padding: calc(var(--clock) * 0.02) 0; gap: 3vh; min-width: 0;
   }
   .label { font-size: min(2.4vh, 1.4vw); letter-spacing: .22em; color: var(--dim); text-transform: uppercase; }
   .date { font-size: min(6.2vh, 3.4vw); font-weight: 500; letter-spacing: .04em; white-space: nowrap; }
@@ -41,7 +42,7 @@
 
   .sub {
     display: flex; align-items: center; gap: 2.4vw;
-    padding: 2vh 2vw; margin-top: 8vh; margin-right: 1vw;
+    padding: 2vh 2vw; margin-right: 1vw;
     border: 1px solid var(--faint); border-radius: 2vh;
     align-self: flex-end;
   }
@@ -55,7 +56,7 @@
   @media (max-aspect-ratio: 1/1), (max-width: 700px) {
     .stage { grid-template-columns: 1fr; justify-items: center; align-content: center; gap: 2vh; padding: 3vh 5vw; }
     #main-clock { height: auto; width: min(80vw, 44vh); }
-    .info { height: auto; align-items: center; text-align: center; gap: 2vh; }
+    .info { height: auto; padding: 0; justify-content: center; align-items: center; text-align: center; gap: 2vh; }
     .date { font-size: min(5vw, 3.4vh); }
     .time { font-size: min(14vw, 8vh); }
     .label { font-size: 12px; }
@@ -80,8 +81,8 @@
         <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
         <div class="sub-text">
           <div class="label">Austria · Vienna</div>
-          <div class="time" id="sub-time">--:--</div>
           <div class="date" id="sub-date">--</div>
+          <div class="time" id="sub-time">--:--</div>
         </div>
       </aside>
     </section>

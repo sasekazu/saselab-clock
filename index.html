@@ -41,10 +41,9 @@
     font-size: min(24vh, 13vw); font-weight: 300; letter-spacing: .02em;
     font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap;
   }
-  .date-row { display: flex; align-items: center; gap: 2.2vw; white-space: nowrap; }
   .tod { display: inline-flex; align-items: center; gap: .3em; font-weight: 500; color: var(--tod, var(--dim)); }
   .tod svg { height: 1.45em; width: 1.45em; flex: none; }
-  .main-info .tod { font-size: min(5.4vh, 3vw); }
+  .main-info .tod { font-size: min(3.6vh, 2vw); }
   .sub-head { display: flex; align-items: center; gap: 1.4vw; }
   .sub .tod { font-size: min(2.8vh, 1.6vw); }
   .date .u { font-size: .7em; margin: 0 .08em; }
@@ -71,8 +70,8 @@
     .date { font-size: min(5vw, 3.4vh); }
     .time { font-size: min(14vw, 8vh); }
     .label { font-size: 12px; }
-    .date-row { justify-content: center; gap: 16px; }
-    .main-info .tod { font-size: min(4.4vw, 3vh); }
+    .sub-head { justify-content: center; }
+    .main-info .tod { font-size: min(4vw, 2.6vh); }
     .sub .tod { font-size: 14px; }
     .sub { align-self: center; margin-top: 1vh; margin-right: 0; gap: 16px; padding: 10px 18px; text-align: left; }
     #sub-clock { height: 72px; width: 72px; }
@@ -87,11 +86,11 @@
     <svg id="main-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（日本時間）"></svg>
     <section class="info">
       <div class="main-info">
-        <div class="label">Japan · JST</div>
-        <div class="date-row">
-          <div class="date" id="main-date">--</div>
+        <div class="sub-head">
+          <div class="label">Japan · JST</div>
           <div class="tod" id="main-tod"></div>
         </div>
+        <div class="date" id="main-date">--</div>
         <div class="time" id="main-time">--:--</div>
       </div>
       <aside class="sub">

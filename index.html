@@ -41,6 +41,12 @@
     font-size: min(24vh, 13vw); font-weight: 300; letter-spacing: .02em;
     font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap;
   }
+  .date-row { display: flex; align-items: center; gap: 2.2vw; white-space: nowrap; }
+  .tod { display: inline-flex; align-items: center; gap: .3em; font-weight: 500; color: var(--tod, var(--dim)); }
+  .tod svg { height: 1.45em; width: 1.45em; flex: none; }
+  .main-info .tod { font-size: min(5.4vh, 3vw); }
+  .sub-head { display: flex; align-items: center; gap: 1.4vw; }
+  .sub .tod { font-size: min(2.8vh, 1.6vw); }
   .date .u { font-size: .7em; margin: 0 .08em; }
   .date .wd { margin-left: .4em; }
   .main-info { display: flex; flex-direction: column; gap: 2vh; }
@@ -65,6 +71,9 @@
     .date { font-size: min(5vw, 3.4vh); }
     .time { font-size: min(14vw, 8vh); }
     .label { font-size: 12px; }
+    .date-row { justify-content: center; gap: 16px; }
+    .main-info .tod { font-size: min(4.4vw, 3vh); }
+    .sub .tod { font-size: 14px; }
     .sub { align-self: center; margin-top: 1vh; margin-right: 0; gap: 16px; padding: 10px 18px; text-align: left; }
     #sub-clock { height: 72px; width: 72px; }
     .sub .time { font-size: 30px; }
@@ -79,13 +88,19 @@
     <section class="info">
       <div class="main-info">
         <div class="label">Japan · JST</div>
-        <div class="date" id="main-date">--</div>
+        <div class="date-row">
+          <div class="date" id="main-date">--</div>
+          <div class="tod" id="main-tod"></div>
+        </div>
         <div class="time" id="main-time">--:--</div>
       </div>
       <aside class="sub">
         <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
         <div class="sub-text">
-          <div class="label">Austria · Vienna</div>
+          <div class="sub-head">
+            <div class="label">Austria · Vienna</div>
+            <div class="tod" id="sub-tod"></div>
+          </div>
           <div class="date" id="sub-date">--</div>
           <div class="time" id="sub-time">--:--</div>
         </div>
@@ -188,6 +203,35 @@
     `${t.y}<span class="u">年</span>${t.mo}<span class="u">月</span>${t.d}<span class="u">日</span><span class="wd">${WEEKDAYS[t.wd]}</span>`;
   const timeText = (t) => `${pad(t.h)}:${pad(t.mi)}`;
 
+  // Time-of-day: early morning 4-6, morning 6-11, day 11-16, evening 16-19, night 19-4
+  const ICONS = {
+    dawn: '<path d="M6 34h36M14 34a10 10 0 0 1 20 0M24 10v8M24 10l-4 4M24 10l4 4M9 24l4 3M39 24l-4 3"/>',
+    morning: '<circle cx="24" cy="26" r="8"/><path d="M24 8v5M24 39v1M8 26h5M35 26h5M12.5 14.5l3.5 3.5M31.5 34l3.5 3.5M35.5 14.5L32 18M12.5 37.5L16 34"/><path d="M6 42h36"/>',
+    day: '<circle cx="24" cy="24" r="9"/><path d="M24 4v6M24 38v6M4 24h6M38 24h6M9.9 9.9l4.2 4.2M33.9 33.9l4.2 4.2M38.1 9.9l-4.2 4.2M14.1 33.9l-4.2 4.2"/>',
+    evening: '<path d="M6 34h36M14 34a10 10 0 0 1 20 0M24 12v8M24 20l-4-4M24 20l4-4M9 24l4 3M39 24l-4 3M12 41h24"/>',
+    night: '<path d="M32 8a16 16 0 1 0 8 26A14 14 0 0 1 32 8z"/><path d="M38 8v6M35 11h6"/>',
+  };
+  const TOD = {
+    dawn:    { name: "早朝", color: "#ffb88a" },
+    morning: { name: "朝",   color: "#ffd86b" },
+    day:     { name: "昼",   color: "#ffe14d" },
+    evening: { name: "夕",   color: "#ff8a5c" },
+    night:   { name: "夜",   color: "#9ec2ff" },
+  };
+  const periodOf = (h) => h >= 4 && h < 6 ? "dawn" : h >= 6 && h < 11 ? "morning" : h >= 11 && h < 16 ? "day" : h >= 16 && h < 19 ? "evening" : "night";
+  const todHTML = (h) => {
+    const k = periodOf(h);
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg><span>${TOD[k].name}</span>`;
+  };
+  const setTod = (id, h) => {
+    const k = periodOf(h);
+    if (cache[id] === k) return;
+    cache[id] = k;
+    const e = el(id);
+    e.innerHTML = todHTML(h);
+    e.style.setProperty("--tod", TOD[k].color);
+  };
+
   const cache = {};
   const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).innerHTML = v; } };
 
@@ -204,6 +248,8 @@
     setText("main-time", timeText(j));
     setText("sub-date", dateText(v));
     setText("sub-time", timeText(v));
+    setTod("main-tod", j.h);
+    setTod("sub-tod", v.h);
 
     requestAnimationFrame(tick);
   }

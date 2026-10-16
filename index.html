@@ -34,21 +34,21 @@
   .label { font-size: min(2.4vh, 1.4vw); letter-spacing: .22em; color: var(--dim); text-transform: uppercase; }
   .date { font-size: min(6.2vh, 3.4vw); font-weight: 500; letter-spacing: .04em; white-space: nowrap; }
   .time {
-    font-size: min(17vh, 9.4vw); font-weight: 300; letter-spacing: .02em;
+    font-size: min(24vh, 13vw); font-weight: 300; letter-spacing: .02em;
     font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap;
   }
   .main-info { display: flex; flex-direction: column; gap: 2vh; }
 
   .sub {
     display: flex; align-items: center; gap: 2.4vw;
-    padding: 2vh 2vw; margin-top: 3vh;
+    padding: 2vh 2vw; margin-top: 8vh; margin-right: 1vw;
     border: 1px solid var(--faint); border-radius: 2vh;
-    align-self: flex-start;
+    align-self: flex-end;
   }
   #sub-clock { height: 14vh; width: 14vh; flex: none; }
   .sub-text { display: flex; flex-direction: column; gap: 1vh; }
   .sub .label { font-size: min(2vh, 1.2vw); }
-  .sub .time { font-size: min(7vh, 4vw); font-weight: 300; }
+  .sub .time { font-size: min(9vh, 5vw); font-weight: 300; }
   .sub .date { font-size: min(3vh, 1.8vw); font-weight: 400; color: var(--dim); }
 
   /* portrait / narrow screens: stack */
@@ -59,9 +59,9 @@
     .date { font-size: min(5vw, 3.4vh); }
     .time { font-size: min(14vw, 8vh); }
     .label { font-size: 12px; }
-    .sub { align-self: center; margin-top: 1vh; gap: 16px; padding: 10px 18px; text-align: left; }
+    .sub { align-self: center; margin-top: 1vh; margin-right: 0; gap: 16px; padding: 10px 18px; text-align: left; }
     #sub-clock { height: 72px; width: 72px; }
-    .sub .time { font-size: 26px; }
+    .sub .time { font-size: 30px; }
     .sub .date { font-size: 14px; }
     .sub .label { font-size: 11px; }
   }
@@ -74,13 +74,13 @@
       <div class="main-info">
         <div class="label">Japan · JST</div>
         <div class="date" id="main-date">--</div>
-        <div class="time" id="main-time">--:--:--</div>
+        <div class="time" id="main-time">--:--</div>
       </div>
       <aside class="sub">
         <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
         <div class="sub-text">
           <div class="label">Austria · Vienna</div>
-          <div class="time" id="sub-time">--:--:--</div>
+          <div class="time" id="sub-time">--:--</div>
           <div class="date" id="sub-date">--</div>
         </div>
       </aside>
@@ -121,8 +121,8 @@
       for (let h = 1; h <= 12; h++) {
         const a = (h * 30 * Math.PI) / 180;
         const t = make("text", {
-          x: Math.sin(a) * 72, y: -Math.cos(a) * 72,
-          fill: "#f2f2f2", "font-size": 14, "font-weight": 300,
+          x: Math.sin(a) * 67, y: -Math.cos(a) * 67,
+          fill: "#f2f2f2", "font-size": 18, "font-weight": 600,
           "text-anchor": "middle", "dominant-baseline": "central",
           "font-family": "Helvetica Neue, Arial, sans-serif",
         });
@@ -136,8 +136,8 @@
       svg.appendChild(g);
       return g;
     };
-    const hour = hand(detailed ? 5 : 6, detailed ? 40 : 48, "#f2f2f2");
-    const minute = hand(detailed ? 3.5 : 4, detailed ? 60 : 70, "#f2f2f2");
+    const hour = hand(detailed ? 5 : 6, detailed ? 38 : 48, "#f2f2f2");
+    const minute = hand(detailed ? 3.5 : 4, detailed ? 54 : 70, "#f2f2f2");
     const second = detailed ? hand(1.5, 74, "#ff5a4d", 16) : null;
     svg.appendChild(make("circle", { r: detailed ? 4 : 5, fill: detailed ? "#ff5a4d" : "#f2f2f2" }));
     return { hour, minute, second };
@@ -179,7 +179,7 @@
 
   const el = (id) => document.getElementById(id);
   const dateText = (t) => `${t.y}年${t.mo}月${t.d}日（${WEEKDAYS[t.wd]}）`;
-  const timeText = (t) => `${pad(t.h)}:${pad(t.mi)}:${pad(t.s)}`;
+  const timeText = (t) => `${pad(t.h)}:${pad(t.mi)}`;
 
   const cache = {};
   const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).textContent = v; } };

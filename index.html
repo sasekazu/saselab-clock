@@ -38,7 +38,7 @@
   .label { font-size: min(2.4vh, 1.4vw); letter-spacing: .22em; color: var(--dim); text-transform: uppercase; }
   .date { font-size: min(6.2vh, 3.4vw); font-weight: 500; letter-spacing: .04em; white-space: nowrap; }
   .time {
-    font-size: min(24vh, 13vw); font-weight: 300; letter-spacing: .02em;
+    font-size: min(15.5vh, 8.8vw); font-weight: 300; letter-spacing: .02em;
     font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap;
   }
   .tod { display: inline-flex; align-items: center; gap: .3em; font-weight: 500; color: var(--tod, var(--dim)); }
@@ -46,20 +46,35 @@
   .main-info .tod { font-size: min(3.6vh, 2vw); }
   .sub-head { display: flex; align-items: center; gap: 1.4vw; }
   .sub .tod { font-size: min(2.8vh, 1.6vw); }
+  /* --- class schedule --- */
+  .school { display: flex; flex-direction: column; gap: .9vh; width: min(100%, 46vw); }
+  .sch-row { display: flex; align-items: baseline; justify-content: space-between; gap: 2vw; white-space: nowrap; }
+  .sch-name { font-size: min(5.2vh, 2.8vw); font-weight: 600; color: var(--c); }
+  .sch-count { font-size: min(3.4vh, 1.9vw); font-weight: 500; color: var(--fg); }
+  .sch-count b { font-size: 1.7em; font-weight: 500; color: var(--c); font-variant-numeric: tabular-nums; margin: 0 .1em; }
+  .tl { position: relative; height: min(1.5vh, 0.9vw); margin-top: .6vh; }
+  .tl .seg { position: absolute; top: 0; height: 100%; border-radius: 99px; background: #262626; overflow: hidden; }
+  .tl .seg i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c); }
+  .tl .seg.past i { width: 100%; opacity: .45; }
+  .tl .now { position: absolute; top: -.7vh; bottom: -.7vh; width: 3px; margin-left: -1.5px; background: #fff; border-radius: 2px; }
+  .tl-labels { position: relative; height: min(2.6vh, 1.5vw); font-size: min(2.2vh, 1.25vw); color: var(--dim); }
+  .tl-labels span { position: absolute; transform: translateX(-50%); }
+  .tl-labels span.cur { color: var(--fg); font-weight: 600; }
+  .sch-next { font-size: min(2.4vh, 1.4vw); color: var(--dim); white-space: nowrap; }
   .date .u { font-size: .7em; margin: 0 .08em; }
   .date .wd { margin-left: .4em; }
   .main-info { display: flex; flex-direction: column; gap: 2vh; }
 
   .sub {
     display: flex; align-items: center; gap: 2.4vw;
-    padding: 2vh 2vw; margin-right: 1vw;
+    padding: 1.4vh 2vw; margin-right: 1vw;
     border: 1px solid var(--faint); border-radius: 2vh;
     align-self: flex-end;
   }
   #sub-clock { height: 14vh; width: 14vh; flex: none; }
   .sub-text { display: flex; flex-direction: column; gap: 1vh; }
   .sub .label { font-size: min(2vh, 1.2vw); }
-  .sub .time { font-size: min(9vh, 5vw); font-weight: 300; }
+  .sub .time { font-size: min(7.6vh, 4.2vw); font-weight: 300; }
   .sub .date { font-size: min(3vh, 1.8vw); font-weight: 500; color: var(--fg); }
 
   /* portrait / narrow screens: stack */
@@ -93,6 +108,7 @@
         <div class="date" id="main-date">--</div>
         <div class="time" id="main-time">--:--</div>
       </div>
+      <section class="school" id="school" aria-live="off"></section>
       <aside class="sub">
         <svg id="sub-clock" viewBox="-100 -100 200 200" role="img" aria-label="アナログ時計（オーストリア時間）"></svg>
         <div class="sub-text">
@@ -231,6 +247,60 @@
     e.style.setProperty("--tod", TOD[k].color);
   };
 
+  // --- Class schedule (JST). Times in minutes from 00:00. ---
+  const hm = (h, m) => h * 60 + m;
+  const PERIODS = [
+    { label: "1", name: "1校時",  s: hm(8, 45),  e: hm(10, 15), c: "#4fd1c5" },
+    { label: "礼", name: "礼拝",  s: hm(10, 15), e: hm(10, 45), c: "#c9a8ff" },
+    { label: "2", name: "2校時",  s: hm(10, 45), e: hm(12, 15), c: "#4fd1c5" },
+    { label: "昼", name: "昼休み", s: hm(12, 15), e: hm(13, 15), c: "#8fd36b", rest: true },
+    { label: "3", name: "3校時",  s: hm(13, 15), e: hm(14, 45), c: "#4fd1c5" },
+    { label: "4", name: "4校時",  s: hm(15, 0),  e: hm(16, 30), c: "#4fd1c5" },
+    { label: "5", name: "5校時",  s: hm(16, 45), e: hm(18, 15), c: "#4fd1c5" },
+  ];
+  const DAY_START = PERIODS[0].s, DAY_END = PERIODS[PERIODS.length - 1].e;
+  const pct = (m) => ((m - DAY_START) / (DAY_END - DAY_START)) * 100;
+  const hmText = (m) => `${Math.floor(m / 60)}:${pad(m % 60)}`;
+  const durText = (m) => m >= 60 ? `<b>${Math.floor(m / 60)}</b>時間${m % 60 ? `<b>${m % 60}</b>分` : ""}` : `<b>${m}</b>分`;
+
+  function schoolHTML(nowMin) {
+    const cur = PERIODS.findIndex((p) => nowMin >= p.s && nowMin < p.e);
+    const next = PERIODS.find((p) => p.s > nowMin);
+    let name, color = "#9a9a9a", count = "", nextText = "";
+    if (cur >= 0) {
+      const p = PERIODS[cur];
+      name = p.name; color = p.c;
+      count = `終了まで あと${durText(p.e - nowMin)}`;
+      if (PERIODS[cur + 1]) {
+        const n = PERIODS[cur + 1];
+        nextText = n.s === p.e ? `次は ${n.name}（${hmText(n.s)}〜）` : `次は ${n.name}（${hmText(n.s)}〜）／ ${hmText(p.e)} から休み時間`;
+      } else {
+        nextText = "本日最後のコマです";
+      }
+    } else if (next) {
+      name = nowMin < DAY_START ? "授業前" : "休み時間";
+      count = `${next.name}開始まで あと${durText(next.s - nowMin)}`;
+      nextText = `${next.name} ${hmText(next.s)}〜${hmText(next.e)}`;
+    } else {
+      name = "本日の授業は終了";
+      nextText = "お疲れさまでした";
+    }
+
+    const segs = PERIODS.map((p, i) => {
+      const state = i === cur ? "cur" : p.e <= nowMin ? "past" : "future";
+      const fill = i === cur ? `<i style="width:${((nowMin - p.s) / (p.e - p.s)) * 100}%"></i>` : "<i></i>";
+      return `<div class="seg ${state}" style="--c:${p.c};left:${pct(p.s)}%;width:${pct(p.e) - pct(p.s) - 0.4}%">${fill}</div>`;
+    }).join("");
+    const labels = PERIODS.map((p, i) =>
+      `<span class="${i === cur ? "cur" : ""}" style="left:${(pct(p.s) + pct(p.e)) / 2}%">${p.label}</span>`).join("");
+    const inRange = nowMin >= DAY_START && nowMin <= DAY_END;
+    const marker = inRange ? `<div class="now" style="left:${pct(nowMin)}%"></div>` : "";
+
+    return `<div class="sch-row" style="--c:${color}"><div class="sch-name">${name}</div><div class="sch-count">${count}</div></div>`
+      + `<div><div class="tl">${segs}${marker}</div><div class="tl-labels">${labels}</div></div>`
+      + `<div class="sch-next">${nextText}</div>`;
+  }
+
   const cache = {};
   const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).innerHTML = v; } };
 
@@ -247,6 +317,7 @@
     setText("main-time", timeText(j));
     setText("sub-date", dateText(v));
     setText("sub-time", timeText(v));
+    setText("school", schoolHTML(j.h * 60 + j.mi));
     setTod("main-tod", j.h);
     setTod("sub-tod", v.h);
 

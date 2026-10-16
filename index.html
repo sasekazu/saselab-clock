@@ -61,6 +61,8 @@
   .tl-labels span { position: absolute; transform: translateX(-50%); }
   .tl-labels span.cur { color: var(--fg); font-weight: 600; }
   .sch-next { font-size: min(2.4vh, 1.4vw); color: var(--dim); white-space: nowrap; }
+  .no-school .school { display: none; }
+  .no-school .time { font-size: min(24vh, 13vw); }
   .date .u { font-size: .7em; margin: 0 .08em; }
   .date .wd { margin-left: .4em; }
   .main-info { display: flex; flex-direction: column; gap: 2vh; }
@@ -301,6 +303,40 @@
       + `<div class="sch-next">${nextText}</div>`;
   }
 
+  // --- Japanese public holidays (computed; valid for 1980-2099) ---
+  const holidayCache = {};
+  function holidaysOf(year) {
+    if (holidayCache[year]) return holidayCache[year];
+    const set = new Set();
+    const key = (m, d) => m * 100 + d;
+    const dow = (m, d) => new Date(Date.UTC(year, m - 1, d)).getUTCDay();
+    const nthMon = (m, n) => { const first = (1 - dow(m, 1) + 7) % 7 + 1; return first + 7 * (n - 1); };
+    const k = year - 1980;
+    const spring = Math.floor(20.8431 + 0.242194 * k - Math.floor(k / 4));
+    const autumn = Math.floor(23.2488 + 0.242194 * k - Math.floor(k / 4));
+    [[1, 1], [1, nthMon(1, 2)], [2, 11], [2, 23], [3, spring], [4, 29], [5, 3], [5, 4], [5, 5],
+     [7, nthMon(7, 3)], [8, 11], [9, nthMon(9, 3)], [9, autumn], [10, nthMon(10, 2)], [11, 3], [11, 23]]
+      .forEach(([m, d]) => set.add(key(m, d)));
+    // Substitute holiday: a holiday on Sunday moves to the next non-holiday day.
+    const base = [...set];
+    base.forEach((v) => {
+      const m = Math.floor(v / 100), d = v % 100;
+      if (dow(m, d) !== 0) return;
+      let t = new Date(Date.UTC(year, m - 1, d + 1));
+      while (set.has(key(t.getUTCMonth() + 1, t.getUTCDate()))) t = new Date(t.getTime() + 864e5);
+      set.add(key(t.getUTCMonth() + 1, t.getUTCDate()));
+    });
+    // Citizens' holiday: a weekday sandwiched between two holidays.
+    for (let m = 1; m <= 12; m++) for (let d = 1; d <= 31; d++) {
+      const t = new Date(Date.UTC(year, m - 1, d));
+      if (t.getUTCMonth() !== m - 1 || t.getUTCDay() === 0 || set.has(key(m, d))) continue;
+      const pv = new Date(t.getTime() - 864e5), nx = new Date(t.getTime() + 864e5);
+      if (set.has(key(pv.getUTCMonth() + 1, pv.getUTCDate())) && set.has(key(nx.getUTCMonth() + 1, nx.getUTCDate()))) set.add(key(m, d));
+    }
+    return (holidayCache[year] = set);
+  }
+  const isSchoolDay = (t) => t.wd !== 0 && t.wd !== 6 && !holidaysOf(t.y).has(t.mo * 100 + t.d);
+
   const cache = {};
   const setText = (id, v) => { if (cache[id] !== v) { cache[id] = v; el(id).innerHTML = v; } };
 
@@ -317,7 +353,9 @@
     setText("main-time", timeText(j));
     setText("sub-date", dateText(v));
     setText("sub-time", timeText(v));
-    setText("school", schoolHTML(j.h * 60 + j.mi));
+    const school = isSchoolDay(j);
+    document.body.classList.toggle("no-school", !school);
+    setText("school", school ? schoolHTML(j.h * 60 + j.mi) : "");
     setTod("main-tod", j.h);
     setTod("sub-tod", v.h);
 
